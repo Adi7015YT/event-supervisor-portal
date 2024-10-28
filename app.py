@@ -1,8 +1,8 @@
-from flask import Flask, request, jsonify
-import pyodbc
+from flask import Flask, request, jsonify, render_template
 import mysql.connector
 from datetime import datetime
 from config import DB_CONFIG
+
 app = Flask(__name__)
 
 # Database connection setup using values from config.py
@@ -12,41 +12,35 @@ conn = mysql.connector.connect(
     user=DB_CONFIG['user'],
     password=DB_CONFIG['password']
 )
-# Test
+
+# Serve the HTML template
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+# Test database connection
 @app.route('/api/test', methods=['GET'])
 def test_connection():
     cursor = conn.cursor()
-    cursor.execute("SELECT 1")  # Simple query to test the connection
+    cursor.execute("SELECT 1")
     result = cursor.fetchone()
     return jsonify({"success": result[0] == 1})
 
 # Endpoint to fetch students for a specific supervisor
 @app.route('/api/students', methods=['GET'])
 def get_students():
-    supervisor_id = request.args.get('supervisor_id')  # Supervisor ID for authorization
+    supervisor_id = request.args.get('supervisor_id')
     if not supervisor_id:
         return jsonify({"error": "Supervisor ID is required"}), 400
 
-    cursor = conn.cursor()
-    query = "SELECT UniqueID, StudentName, NumSkillBadges, ArcadeDone, Remarks, Timestamp FROM EventData WHERE SupervisorID = ?"
+    cursor = conn.cursor(dictionary=True)
+    query = "SELECT UniqueID, StudentName, NumSkillBadges, ArcadeDone, Remarks, Timestamp FROM EventData WHERE SupervisorID = %s"
     cursor.execute(query, (supervisor_id,))
     students = cursor.fetchall()
 
-    # Formatting results as a list of dictionaries
-    students_data = [
-        {
-            "UniqueID": student.UniqueID,
-            "StudentName": student.StudentName,
-            "NumSkillBadges": student.NumSkillBadges,
-            "ArcadeDone": student.ArcadeDone,
-            "Remarks": student.Remarks,
-            "Timestamp": student.Timestamp
-        } for student in students
-    ]
+    return jsonify(students)
 
-    return jsonify(students_data)
-
-# Endpoint to add or update student data by supervisor
+# Endpoint to add or update student data
 @app.route('/api/add_data', methods=['POST'])
 def add_data():
     data = request.json
@@ -57,25 +51,22 @@ def add_data():
     remarks = data.get('remarks')
     timestamp = datetime.now()
 
-    # Validation to ensure supervisor is authorized
     cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(1) FROM EventData WHERE UniqueID = ? AND SupervisorID = ?", (unique_id, supervisor_id))
+    cursor.execute("SELECT COUNT(1) FROM EventData WHERE UniqueID = %s AND SupervisorID = %s", (unique_id, supervisor_id))
     if cursor.fetchone()[0] == 0:
         return jsonify({"error": "Unauthorized access or invalid student ID"}), 403
 
-    # Insert or update data without modifying supervisor_id and unique_id
     query = """
         UPDATE EventData
-        SET NumSkillBadges = ?, ArcadeDone = ?, Remarks = ?, Timestamp = ?
-        WHERE UniqueID = ? AND SupervisorID = ?
+        SET NumSkillBadges = %s, ArcadeDone = %s, Remarks = %s, Timestamp = %s
+        WHERE UniqueID = %s AND SupervisorID = %s
     """
     cursor.execute(query, (num_skill_badges, arcade_done, remarks, timestamp, unique_id, supervisor_id))
 
-    # If no rows were updated, it means the record doesn’t exist, so insert it.
     if cursor.rowcount == 0:
         insert_query = """
             INSERT INTO EventData (UniqueID, StudentName, SupervisorID, NumSkillBadges, ArcadeDone, Remarks, Timestamp)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
         cursor.execute(insert_query, (unique_id, data.get('student_name'), supervisor_id, num_skill_badges, arcade_done, remarks, timestamp))
 
