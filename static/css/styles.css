@@ -23,16 +23,23 @@
   
   nav {
     display: flex;
-    justify-content: space-between;
+    justify-content: center; /* Centering the nav-container */
     align-items: center;
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
   }
   
+  .nav-container {
+    display: flex;
+    align-items: center;
+    width: 100%;
+  }
+  
   .nav-left {
     display: flex;
     align-items: center;
+    flex-grow: 1; /* Allows the left section to grow */
   }
   
   .nav-left img {
@@ -45,15 +52,24 @@
     font-weight: bold;
   }
   
+  .nav-right {
+    display: flex;
+    gap: 20px; /* Increased spacing for better readability */
+  }
+  
   .nav-right a {
     color: white;
     text-decoration: none;
-    margin-left: 15px;
     font-weight: bold;
+    transition: color 0.3s ease;
   }
   
   .nav-right a:hover {
     color: #d3d3d3;
+  }
+  
+  .nav-right a.active {
+    text-decoration: underline; /* Underline for active link */
   }
   
   /* Main Content */
@@ -61,7 +77,8 @@
     flex: 1;
     max-width: 800px;
     width: 100%;
-    margin: 40px auto;
+    margin: 20px auto;
+    padding: 0 15px;
     text-align: center;
   }
   
@@ -112,6 +129,7 @@
   .student-data {
     width: 100%;
     border-collapse: collapse;
+    font-size: 0.9em;
   }
   
   .student-data th, .student-data td {
@@ -145,5 +163,55 @@
     text-align: center;
     font-size: 0.9em;
     color: #333;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .nav-right {
+      flex-direction: column;
+      text-align: center;
+      gap: 10px;
+    }
+  
+    .container {
+      padding: 0 10px;
+    }
+  
+    .login-section h1 {
+      font-size: 1.5em;
+    }
+  
+    .student-data th, .student-data td {
+      padding: 8px;
+    }
+  
+    button, .update-btn {
+      width: 100%;
+      padding: 10px;
+      font-size: 14px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .nav-left img {
+      width: 30px;
+    }
+  
+    .nav-left span {
+      font-size: 0.9em;
+    }
+  
+    .nav-right a {
+      font-size: 0.85em;
+    }
+  
+    .student-data th, .student-data td {
+      font-size: 0.8em;
+      padding: 6px;
+    }
+  
+    .container {
+      padding: 0 5px;
+    }
   }
   
