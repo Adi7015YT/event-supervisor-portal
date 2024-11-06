@@ -186,6 +186,11 @@ const StudentProgress = () => {
                                 </tr>
                             )}
                         </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colSpan="7" className="border px-4 py-2 text-center h-16"></td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             )}
